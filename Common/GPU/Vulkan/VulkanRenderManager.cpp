@@ -5,6 +5,7 @@
 
 #include "Common/Log.h"
 #include "Common/StringUtils.h"
+#include "Common/System/PerfTimes.h"
 #include "Common/TimeUtil.h"
 
 #include "Common/GPU/Vulkan/VulkanAlloc.h"
@@ -610,6 +611,7 @@ void VulkanRenderManager::CompileThreadFunc() {
 
 void VulkanRenderManager::RenderThreadFunc() {
 	SetCurrentThreadName("VulkanRenderMan");
+	perf::RegisterRenderThread();
 	while (true) {
 		_dbg_assert_(useRenderThread_);
 
@@ -640,6 +642,7 @@ void VulkanRenderManager::RenderThreadFunc() {
 	// Wait for the device to be done with everything, before tearing stuff down.
 	// TODO: Do we really need this? It's probably a good idea, though.
 	vkDeviceWaitIdle(vulkan_->GetDevice());
+	perf::UnregisterRenderThread();
 	VLOG("PULL: Quitting");
 }
 
@@ -720,6 +723,8 @@ void VulkanRenderManager::BeginFrame(bool enableProfiling, bool enableLogProfile
 		_assert_msg_(false, "Device lost in vkWaitForFences");
 	}
 	vkResetFences(device, 1, &frameData.fence);
+	// Time the emulation thread waited for the render thread and the GPU.
+	perf::AddSyncWait(time_now_d() - frameBeginTime);
 
 	uint64_t frameId = frameIdGen_++;
 
@@ -1597,8 +1602,10 @@ void VulkanRenderManager::Run(VKRRenderThreadTask &task) {
 
 	if (task.runType == VKRRunType::PRESENT) {
 		if (!frameData.skipSwap) {
+			const double presentStart = time_now_d();
 			VkResult res = frameData.QueuePresent(vulkan_, frameDataShared_);
 			frameTimeHistory_[frameData.frameId].queuePresent = time_now_d();
+			perf::AddPresent(frameTimeHistory_[frameData.frameId].queuePresent - presentStart);
 			if (res == VK_ERROR_OUT_OF_DATE_KHR) {
 				// We clearly didn't get this in vkAcquireNextImageKHR because of the skipSwap check above.
 				// Do the increment.

@@ -50,6 +50,7 @@
 #include "Core/MIPS/MIPSVFPUUtils.h"
 #include "Core/Debugger/SymbolMap.h"
 #include "Core/System.h"
+#include "Core/PerfCounters.h"
 #include "Core/HLE/HLE.h"
 #include "Core/HLE/Plugins.h"
 #include "Core/HLE/ReplaceTables.h"
@@ -572,6 +573,7 @@ void PSP_UpdateDebugStats(bool collectStats) {
 
 	if (!PSP_CoreParameter().frozen && !Core_IsStepping()) {
 		kernelStats.ResetFrame();
+		perf::OnGpuStats(gpuStats);
 		gpuStats.ResetFrame();
 	}
 }

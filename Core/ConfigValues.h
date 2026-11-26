@@ -212,6 +212,10 @@ enum class ShowStatusFlags {
 	FPS_COUNTER = 1 << 1,
 	SPEED_COUNTER = 1 << 2,
 	BATTERY_PERCENT = 1 << 3,
+	// DavPSP: frame times and emulation thread CPU usage
+	CPU_USAGE = 1 << 4,
+	// DavPSP: render thread CPU usage
+	GPU_USAGE = 1 << 5,
 };
 
 enum class SplineQuality {

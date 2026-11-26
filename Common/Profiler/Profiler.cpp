@@ -18,7 +18,7 @@
 // iOS did not support C++ thread_local before iOS 9
 #define MAX_THREADS 1     // Can be any number, represents concurrent threads calling the profiler.
 #else
-#define MAX_THREADS 4     // Can be any number, represents concurrent threads calling the profiler.
+#define MAX_THREADS 8     // DavPSP: 8 (was 4), so the emulation, compile, IO and render threads each get their own slot.
 #endif
 #define HISTORY_SIZE 128 // Must be power of 2
 

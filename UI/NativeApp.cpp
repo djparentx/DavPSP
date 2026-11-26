@@ -101,6 +101,7 @@
 #include "Core/SaveState.h"
 #include "Core/Screenshot.h"
 #include "Core/System.h"
+#include "Core/PerfCounters.h"
 #include "Core/HLE/__sceAudio.h"
 #include "Core/HLE/sceCtrl.h"
 #include "Core/HLE/sceUsbCam.h"
@@ -977,6 +978,7 @@ void CallbackPostRender(UIContext *dc, void *userdata) {
 static void SendMouseDeltaAxis();
 
 void NativeFrame(GraphicsContext *graphicsContext) {
+	perf::OnHostFrame();
 	PROFILE_END_FRAME();
 
 	if (System_GetPropertyInt(SYSPROP_DEVICE_TYPE) == DEVICE_TYPE_DESKTOP) {

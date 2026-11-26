@@ -46,6 +46,7 @@
 #include "Core/HLE/ErrorCodes.h"
 #include "Core/HLE/FunctionWrappers.h"
 #include "Core/HLE/sceDisplay.h"
+#include "Core/PerfCounters.h"
 #include "Core/HLE/sceKernel.h"
 #include "Core/HLE/sceNet.h"
 #include "Core/HLE/sceKernelThread.h"
@@ -516,6 +517,7 @@ void hleEnterVblank(u64 userdata, int cyclesLate) {
 
 	VERBOSE_LOG(Log::sceDisplay, "Enter VBlank %i", vbCount);
 
+	perf::OnVblank();
 	DisplayFireVblankStart();
 
 	CoreTiming::ScheduleEvent(msToCycles(vblankMs) - cyclesLate, leaveVblankEvent, vbCount + 1);
@@ -669,6 +671,7 @@ void __DisplayFlip(int cyclesLate) {
 			gpu->SetCurFramebufferDirty(fbReallyDirty);
 			if (fbReallyDirty) {
 				DisplayFireActualFlip();
+				perf::OnActualFlip();
 			}
 		}
 	}
@@ -698,6 +701,7 @@ void __DisplayFlip(int cyclesLate) {
 		// Tell the emulated GPU to skip the next frame.
 		gstate_c.skipDrawReason |= SKIPDRAW_SKIPFRAME;
 		numSkippedFrames++;
+		perf::OnSkippedFrame();
 	} else {
 		gstate_c.skipDrawReason &= ~SKIPDRAW_SKIPFRAME;
 		numSkippedFrames = 0;

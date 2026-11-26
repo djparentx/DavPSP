@@ -43,6 +43,7 @@
 #include "Common/Math/SIMDHeaders.h"
 #include "Common/Math/CrossSIMD.h"
 #include "Common/TimeUtil.h"
+#include "Common/System/PerfTimes.h"
 #include "Core/Config.h"
 #include "Core/ConfigValues.h"
 #include "Core/HW/StereoResampler.h"
@@ -217,6 +218,7 @@ void StereoResampler::Mix(s16 *samples, unsigned int numSamples, bool consider_f
 			// int missing = numSamples * 2 - currentSample;
 			// ILOG("Resampler underrun: %d (numSamples: %d, currentSample: %d)", missing, numSamples, currentSample / 2);
 			underrunCount_++;
+			perf::g_audioUnderruns.fetch_add(1, std::memory_order_relaxed);
 			break;
 		}
 		u32 indexR2 = indexR + 2; //next sample

@@ -2,7 +2,8 @@
 
 #include <cstdint>
 
-// #define USE_PROFILER
+// DavPSP diagnostics branch: profiler on for the Frame profile overlay and the diag log.
+#define USE_PROFILER
 
 #ifdef USE_PROFILER
 

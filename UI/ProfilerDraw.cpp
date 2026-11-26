@@ -60,7 +60,7 @@ void DrawProfile(UIContext &ui) {
 	int numThreads = Profiler_GetNumThreads();
 	int historyLength = Profiler_GetHistoryLength();
 
-	ui.SetFontStyle(ui.theme->uiFont);
+	ui.SetFontStyle(ui.GetTheme().uiFont);
 
 	static float lastMaxVal = 1.0f / 60.0f;
 	float legendMinVal = lastMaxVal * (1.0f / 120.0f);

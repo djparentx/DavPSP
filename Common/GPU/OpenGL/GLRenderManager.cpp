@@ -2,6 +2,7 @@
 #include "GLRenderManager.h"
 #include "Common/GPU/OpenGL/GLFeatures.h"
 #include "Common/GPU/thin3d.h"
+#include "Common/System/PerfTimes.h"
 #include "Common/Thread/ThreadUtil.h"
 #include "Common/VR/PPSSPPVR.h"
 
@@ -57,6 +58,7 @@ GLRenderManager::~GLRenderManager() {
 void GLRenderManager::ThreadStart(Draw::DrawContext *draw) {
 	queueRunner_.CreateDeviceObjects();
 	renderThreadId = std::this_thread::get_id();
+	perf::RegisterRenderThread();
 
 	if (newInflightFrames_ != -1) {
 		INFO_LOG(Log::G3D, "Updating inflight frames to %d", newInflightFrames_);
@@ -102,6 +104,7 @@ void GLRenderManager::ThreadEnd() {
 	INFO_LOG(Log::G3D, "GLRenderManager::ThreadEnd begin");
 
 	runCompileThread_ = false;
+	perf::UnregisterRenderThread();
 
 	queueRunner_.DestroyDeviceObjects();
 
@@ -366,6 +369,8 @@ void GLRenderManager::BeginFrame(bool enableProfiling) {
 		}
 		frameData.readyForFence = false;
 	}
+	// Time the emulation thread waited for the render thread.
+	perf::AddSyncWait(time_now_d() - frameTimeData.frameBegin);
 
 	insideFrame_ = true;
 }

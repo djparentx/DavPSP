@@ -2541,6 +2541,8 @@ add_library(${CoreLibName} ${CoreLinkType}
 	Core/Screenshot.h
 	Core/System.cpp
 	Core/System.h
+	Core/PerfCounters.cpp
+	Core/PerfCounters.h
 	Core/Util/AtracTrack.cpp
 	Core/Util/AtracTrack.h
 	Core/Util/AudioFormat.cpp

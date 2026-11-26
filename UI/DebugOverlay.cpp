@@ -21,6 +21,7 @@
 #include "Core/Core.h"
 #include "Core/ELF/ParamSFO.h"
 #include "Core/System.h"
+#include "Core/PerfCounters.h"
 #include "Core/Util/GameDB.h"
 #include "GPU/GPU.h"
 #include "GPU/GPUCommon.h"
@@ -492,6 +493,25 @@ void DrawFPS(UIContext *ctx, const Bounds &bounds) {
 		}
 	}
 
+	// DavPSP: same layout as DavCast. Frame times min | avg | max, then thread usage.
+	if (g_Config.iShowStatusFlags & (int)ShowStatusFlags::CPU_USAGE) {
+		w.F("\n%.2fms | %.2fms | %.2fms", perf::GetMinFrameTime(), perf::GetAvgFrameTime(), perf::GetMaxFrameTime());
+		const float usage = perf::GetEmuCpuUsage();
+		if (usage >= 99.95f)
+			w.F("\nCPU: 100%% (%.2fms)", perf::GetEmuCpuTime());
+		else
+			w.F("\nCPU: %.1f%% (%.2fms)", usage, perf::GetEmuCpuTime());
+	}
+	if (g_Config.iShowStatusFlags & (int)ShowStatusFlags::GPU_USAGE) {
+		const float usage = perf::GetRendCpuUsage();
+		if (usage < 0.0f)
+			w.F("\nGPU: n/a");
+		else if (usage >= 99.95f)
+			w.F("\nGPU: 100%% (%.2fms)", perf::GetRendCpuTime());
+		else
+			w.F("\nGPU: %.1f%% (%.2fms)", usage, perf::GetRendCpuTime());
+	}
+
 	ctx->Flush();
 
 	float offset = 10.0f;
@@ -501,8 +521,12 @@ void DrawFPS(UIContext *ctx, const Bounds &bounds) {
 
 	ctx->BindFontTexture();
 	ctx->Draw()->SetFontScale(0.7f, 0.7f);
-	ctx->Draw()->DrawText(ubuntu24, w.as_view(), bounds.x2() - offset, bounds.y + 12, 0xc0000000, ALIGN_TOPRIGHT | FLAG_DYNAMIC_ASCII);
-	ctx->Draw()->DrawText(ubuntu24, w.as_view(), bounds.x2() - offset - 2, bounds.y + 10, 0xFF3fFF3f, ALIGN_TOPRIGHT | FLAG_DYNAMIC_ASCII);
+	// Only CPU/GPU lines selected: drop the leading line break.
+	std::string_view text = w.as_view();
+	if (!text.empty() && text[0] == '\n')
+		text.remove_prefix(1);
+	ctx->Draw()->DrawText(ubuntu24, text, bounds.x2() - offset, bounds.y + 12, 0xc0000000, ALIGN_TOPRIGHT | FLAG_DYNAMIC_ASCII);
+	ctx->Draw()->DrawText(ubuntu24, text, bounds.x2() - offset - 2, bounds.y + 10, 0xFF3fFF3f, ALIGN_TOPRIGHT | FLAG_DYNAMIC_ASCII);
 	ctx->Draw()->SetFontScale(1.0f, 1.0f);
 	ctx->Flush();
 	ctx->RebindTexture();

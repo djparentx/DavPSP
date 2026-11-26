@@ -8,6 +8,8 @@
 #include "Common/System/NativeApp.h"
 #include "Common/System/System.h"
 #include "Common/System/Display.h"
+#include "Common/System/PerfTimes.h"
+#include "Common/TimeUtil.h"
 #include "Core/Config.h"
 #include "Core/ConfigValues.h"
 #include "Core/System.h"
@@ -435,6 +437,7 @@ int SDLGLGraphicsContext::Init(SDL_Window *&window, int x, int y, int w, int h, 
 	bool success = draw_->CreatePresets();
 	_assert_(success);
 	renderManager_->SetSwapFunction([&]() {
+		const double swapStart = time_now_d();
 #ifdef USING_EGL
 		if (useEGLSwap)
 			eglSwapBuffers(g_eglDisplay, g_eglSurface);
@@ -443,6 +446,7 @@ int SDLGLGraphicsContext::Init(SDL_Window *&window, int x, int y, int w, int h, 
 #else
 		SDL_GL_SwapWindow(window_);
 #endif
+		perf::AddPresent(time_now_d() - swapStart);
 	});
 
 	renderManager_->SetSwapIntervalFunction([&](int interval) {
