@@ -66,7 +66,7 @@ CheatFileParser::~CheatFileParser() {
 
 bool CheatFileParser::Parse() {
 	// Ugh, using a member variable as loop counter is bad.
-	for (int lineNumber = 1; fp_ && !feof(fp_); ++lineNumber) {
+	for (int lineNumber = 1; fp_ && !done_ && !feof(fp_); ++lineNumber) {
 		char temp[2048];
 		char *tempLine = fgets(temp, sizeof(temp), fp_);
 		if (!tempLine)
@@ -115,6 +115,18 @@ void CheatFileParser::AddError(const std::string &err, int lineNumber) {
 	errors_.push_back(StringFromFormat("Error on line %d: %s", lineNumber, err.c_str()));
 }
 
+static bool IsForce30Name(std::string name) {
+	std::transform(name.begin(), name.end(), name.begin(), [](unsigned char c) { return (char)std::tolower(c); });
+	static const char * const tags[] = { "30 fps", "30fps", "30 hz", "30hz" };
+	for (const char *tag : tags) {
+		size_t pos = name.find(tag);
+		// Skip "130 FPS" and the like.
+		if (pos != std::string::npos && (pos == 0 || !std::isdigit((unsigned char)name[pos - 1])))
+			return true;
+	}
+	return false;
+}
+
 void CheatFileParser::ParseLine(const std::string &line, int lineNumber) {
 	switch (line[1]) {
 	case 'S':
@@ -122,12 +134,23 @@ void CheatFileParser::ParseLine(const std::string &line, int lineNumber) {
 		Flush();
 		++games_;
 
+		if (db30_) {
+			// cheat.db: only the first exact match counts, then stop reading.
+			if (gameEnabled_ && games_ > 1) {
+				done_ = true;
+				return;
+			}
+			gameEnabled_ = ValidateGameID(line.substr(2));
+			return;
+		}
+
 		if (ValidateGameID(line.substr(2))) {
 			if (gameRiskyEnabled_) {
 				// We found the right one, so let's not use this risky stuff.
 				cheats_.clear();
 				cheatInfo_.clear();
 				gameRiskyEnabled_ = false;
+				force30Found_ = false;
 			}
 			gameEnabled_ = true;
 		} else if (games_ == 1) {
@@ -141,6 +164,7 @@ void CheatFileParser::ParseLine(const std::string &line, int lineNumber) {
 				cheats_.clear();
 				cheatInfo_.clear();
 				gameRiskyEnabled_ = false;
+				force30Found_ = false;
 			}
 			gameEnabled_ = false;
 		}
@@ -164,6 +188,15 @@ void CheatFileParser::ParseLine(const std::string &line, int lineNumber) {
 			AddError("could not parse cheat name line", lineNumber);
 			cheatEnabled_ = false;
 			return;
+		}
+		if (force30_) {
+			if (gameEnabled_ && !force30Found_ && IsForce30Name(lastCheatInfo_.name)) {
+				// Runs it without touching the _C0 in the file.
+				cheatEnabled_ = true;
+				force30Found_ = true;
+			} else if (only30_) {
+				cheatEnabled_ = false;
+			}
 		}
 		return;
 
@@ -209,6 +242,10 @@ bool CheatFileParser::ValidateGameID(std::string_view gameID) {
 	return validGameID_.empty() || ReplaceAll(TrimString(gameID), "-", "") == validGameID_;
 }
 
+// Settings the cheat list was last parsed with.
+static bool parsedForce30 = false;
+static bool parsedUserCheats = false;
+
 static void __CheatStop() {
 	if (cheatEngine) {
 		delete cheatEngine;
@@ -229,6 +266,8 @@ static void __CheatStart() {
 
 	cheatEngine->ParseCheats();
 	g_Config.bReloadCheats = false;
+	parsedForce30 = g_Config.bForce30FPS;
+	parsedUserCheats = g_Config.bEnableCheats;
 	cheatsEnabled = true;
 }
 
@@ -251,7 +290,7 @@ void __CheatInit() {
 	// Always register the event, want savestates to be compatible whether cheats on or off.
 	CheatEvent = CoreTiming::RegisterEvent("CheatEvent", &hleCheat);
 
-	if (g_Config.bEnableCheats) {
+	if (g_Config.bEnableCheats || g_Config.bForce30FPS) {
 		__CheatStart();
 	}
 
@@ -283,7 +322,7 @@ void __CheatDoState(PointerWrap &p) {
 }
 
 void hleCheat(u64 userdata, int cyclesLate) {
-	bool shouldBeEnabled = !Achievements::HardcoreModeActive() && g_Config.bEnableCheats;
+	bool shouldBeEnabled = !Achievements::HardcoreModeActive() && (g_Config.bEnableCheats || g_Config.bForce30FPS);
 
 	if (cheatsEnabled != shouldBeEnabled) {
 		// Okay, let's move to the desired state, then.
@@ -322,8 +361,11 @@ void hleCheat(u64 userdata, int cyclesLate) {
 	if (!cheatEngine || !cheatsEnabled)
 		return;
 
-	if (g_Config.bReloadCheats) {  // Checks if the "reload cheats" button has been pressed.
+	// Reload on the "reload cheats" button, or when either setting was toggled in-game.
+	if (g_Config.bReloadCheats || parsedForce30 != g_Config.bForce30FPS || parsedUserCheats != g_Config.bEnableCheats) {
 		cheatEngine->ParseCheats();
+		parsedForce30 = g_Config.bForce30FPS;
+		parsedUserCheats = g_Config.bEnableCheats;
 		g_Config.bReloadCheats = false;
 	}
 	cheatEngine->Run();
@@ -351,6 +393,11 @@ void CWCheatEngine::CreateCheatFile() {
 
 void CWCheatEngine::ParseCheats() {
 	CheatFileParser parser(filename_, gameID_);
+	const bool force30 = g_Config.bForce30FPS;
+	if (force30) {
+		// With cheats off, the 30 FPS cheat is the only one allowed to run.
+		parser.SetForce30(!g_Config.bEnableCheats, false);
+	}
 
 	parser.Parse();
 	// TODO: Report errors in a user-visible way.
@@ -359,6 +406,14 @@ void CWCheatEngine::ParseCheats() {
 	}
 
 	cheats_ = parser.GetCheats();
+
+	if (force30 && !gameID_.empty() && !parser.Force30Found()) {
+		// Not in the game's own ini: take it straight from cheat.db, nothing is written.
+		CheatFileParser db(GetSysDirectory(DIRECTORY_CHEATS) / "cheat.db", gameID_);
+		db.SetForce30(true, true);
+		db.Parse();
+		cheats_.insert(cheats_.end(), db.GetCheats().begin(), db.GetCheats().end());
+	}
 }
 
 std::vector<CheatFileInfo> CWCheatEngine::FileInfo() const {

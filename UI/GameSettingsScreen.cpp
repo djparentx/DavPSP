@@ -463,6 +463,8 @@ void GameSettingsScreen::CreateGraphicsSettings(UI::ViewGroup *graphicsSettings)
 		g_Config.UpdateAfterSettingAutoFrameSkip();
 	});
 
+	graphicsSettings->Add(new CheckBox(&g_Config.bForce30FPS, gr->T("Force 30 FPS")));
+
 	PopupSliderChoice *altSpeed1 = graphicsSettings->Add(new PopupSliderChoice(&iAlternateSpeedPercent1_, 0, 1000, UI::NO_DEFAULT_INT, gr->T("Alternative Speed", "Alternative speed"), 5, screenManager(), gr->T("%, 0:unlimited")));
 	altSpeed1->SetFormat("%i%%");
 	altSpeed1->SetZeroLabel(gr->T("Unlimited"));

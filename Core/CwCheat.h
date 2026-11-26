@@ -92,6 +92,11 @@ public:
 	const std::vector<CheatCode> &GetCheats() const { return cheats_; }
 	const std::vector<CheatFileInfo> &GetFileInfo() const { return cheatInfo_; }
 
+	// Force 30 FPS: enable the first cheat named like "30 FPS" / "30Hz" for this game.
+	// only: ignore every other cheat. db: multi-game file (cheat.db), exact ID match only.
+	void SetForce30(bool only, bool db) { force30_ = true; only30_ = only; db30_ = db; }
+	bool Force30Found() const { return force30Found_; }
+
 protected:
 	void Flush();
 	void FlushCheatInfo();
@@ -112,4 +117,9 @@ protected:
 	bool gameEnabled_ = true;
 	bool gameRiskyEnabled_ = false;
 	bool cheatEnabled_ = false;
+	bool force30_ = false;
+	bool only30_ = false;
+	bool db30_ = false;
+	bool force30Found_ = false;
+	bool done_ = false;
 };

@@ -888,11 +888,12 @@ int sceDisplaySetFramebuf(u32 topaddr, int linesize, int pixelformat, int sync) 
 	hleEatCycles(290);
 
 	s64 delayCycles = 0;
+	const bool force30 = g_Config.bForce30FPS;
 	// Don't count transitions between display off and display on.
 	if (topaddr != 0 &&
 		(topaddr != framebuf.topaddr || PSP_CoreParameter().compat.flags().SplitFramebufferMargin) &&
 		framebuf.topaddr != 0 &&
-		PSP_CoreParameter().compat.flags().ForceMax60FPS) {
+		(PSP_CoreParameter().compat.flags().ForceMax60FPS || force30)) {
 		// sceDisplaySetFramebuf() isn't supposed to delay threads at all.  This is a hack.
 		// So let's only delay when it's more than 1ms.
 		const s64 FLIP_DELAY_CYCLES_MIN = usToCycles(1000);
@@ -916,9 +917,14 @@ int sceDisplaySetFramebuf(u32 topaddr, int linesize, int pixelformat, int sync) 
 		}
 
 		// 1001 to account for NTSC timing (59.94 fps.)
-		u64 expected = msToCycles(1001) / framerate - LEEWAY_CYCLES_PER_FLIP;
+		u64 expected = msToCycles(1001) / (force30 ? 30 : framerate) - LEEWAY_CYCLES_PER_FLIP;
 		lastFlipCycles = now;
-		nextFlipCycles = std::max(lastFlipCycles, nextFlipCycles) + expected;
+		if (force30 && lastFlipsTooFrequent < FLIP_DELAY_MIN_FLIPS) {
+			// Not delaying yet: don't bank up a debt, or the first delay is a long hitch.
+			nextFlipCycles = lastFlipCycles + expected;
+		} else {
+			nextFlipCycles = std::max(lastFlipCycles, nextFlipCycles) + expected;
+		}
 	}
 
 	__DisplaySetFramebuf(topaddr, linesize, pixelformat, sync);

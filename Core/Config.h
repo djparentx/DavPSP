@@ -309,6 +309,7 @@ public:
 
 	int iFrameSkip;
 	bool bAutoFrameSkip;
+	bool bForce30FPS;
 
 	int iWindowX;
 	int iWindowY;
