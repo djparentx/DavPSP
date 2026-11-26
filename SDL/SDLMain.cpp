@@ -977,12 +977,7 @@ static void ProcessSDLEvent(SDL_Window *window, const SDL_Event &event, InputSta
 				g_Config.iWindowWidth = new_width;
 				g_Config.iWindowHeight = new_height;
 			}
-			// Hide/Show cursor correctly toggling fullscreen
-			if (lastUIState == UISTATE_INGAME && fullscreen && !g_Config.bShowTouchControls) {
-				SDL_ShowCursor(SDL_DISABLE);
-			} else if (lastUIState != UISTATE_INGAME || !fullscreen) {
-				SDL_ShowCursor(SDL_ENABLE);
-			}
+			SDL_ShowCursor(SDL_DISABLE);
 			break;
 		}
 
@@ -1360,6 +1355,7 @@ void UpdateSDLCursor() {
 			SDL_ShowCursor(SDL_DISABLE);
 		if (lastUIState != UISTATE_INGAME || !g_Config.bFullScreen)
 			SDL_ShowCursor(SDL_ENABLE);
+		SDL_ShowCursor(SDL_DISABLE);
 	}
 #endif
 }
