@@ -45,7 +45,8 @@ void RotateRectToDisplayImpl(DisplayRect<T> &rect, T curRTWidth, T curRTHeight) 
 		T origY = rect.y;
 		T rtw = curRTHeight;
 		rect.x = origY;
-		rect.y = clamp_value(rtw - rect.w - origX, T{}, curRTWidth);
+		// dArkOSen: the rotated y runs along the render target's height, not its width.
+		rect.y = clamp_value(rtw - rect.w - origX, T{}, curRTHeight);
 		T temp = rect.w;
 		rect.w = rect.h;
 		rect.h = temp;
