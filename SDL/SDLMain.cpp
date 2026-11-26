@@ -1587,13 +1587,13 @@ int main(int argc, char *argv[]) {
 #endif
 
 	if (mode & SDL_WINDOW_FULLSCREEN_DESKTOP) {
-		g_display.pixel_xres = g_DesktopWidth;
-		g_display.pixel_yres = g_DesktopHeight;
+		g_display.pixel_xres = 320;
+		g_display.pixel_yres = 240;
 		g_Config.bFullScreen = true;
 	} else {
 		// set a sensible default resolution (2x)
-		g_display.pixel_xres = 480 * 2 * set_scale;
-		g_display.pixel_yres = 272 * 2 * set_scale;
+		g_display.pixel_xres = 320;
+		g_display.pixel_yres = 240;
 		if (portrait) {
 			std::swap(g_display.pixel_xres, g_display.pixel_yres);
 		}
