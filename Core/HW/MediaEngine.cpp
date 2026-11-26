@@ -298,7 +298,7 @@ bool MediaEngine::openContext(bool keepReadPos) {
 	av_dict_free(&open_opt);
 
 	bool usedFFMPEGFindStreamInfo = false;
-	if (!SetupStreams() || PSP_CoreParameter().compat.flags().UseFFMPEGFindStreamInfo) {
+	if (true || PSP_CoreParameter().compat.flags().UseFFMPEGFindStreamInfo) {
 		// Fallback to old behavior.  Reads too much and corrupts when game doesn't read fast enough.
 		// SetupStreams sometimes work for newer FFmpeg 3.1+ now, but sometimes framerate is missing.
 		WARN_LOG_REPORT_ONCE(setupStreams, Log::ME, "Failed to read valid video stream data from header");
