@@ -631,7 +631,7 @@ bool PSP_InitStart(const CoreParameter &coreParam) {
 
 		AndroidJNIThreadContext jniContext;
 
-		NOTICE_LOG(Log::Boot, "PPSSPP %s", PPSSPP_GIT_VERSION);
+		NOTICE_LOG(Log::Boot, "DavPSP %s (based on PPSSPP)", PPSSPP_GIT_VERSION);
 
 		Path filename = g_CoreParameter.fileToStart;
 

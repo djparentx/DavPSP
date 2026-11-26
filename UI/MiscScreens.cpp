@@ -614,7 +614,9 @@ void CreditsScroller::Draw(UIContext &dc) {
 	specialthankssolarmystic += ')';
 
 	std::string_view credits[] = {
-		System_GetPropertyBool(SYSPROP_APP_GOLD) ? "PPSSPP Gold" : "PPSSPP",
+		"DavPSP",
+		"",
+		"Based on PPSSPP (GPL 2.0 or later)",
 		"",
 		cr->T("title", "A fast and portable PSP emulator"),
 		"",
@@ -738,11 +740,7 @@ void CreditsScroller::Draw(UIContext &dc) {
 
 	// TODO: This is kinda ugly, done on every frame...
 	char temp[256];
-	if (System_GetPropertyBool(SYSPROP_APP_GOLD)) {
-		snprintf(temp, sizeof(temp), "PPSSPP Gold %s", PPSSPP_GIT_VERSION);
-	} else {
-		snprintf(temp, sizeof(temp), "PPSSPP %s", PPSSPP_GIT_VERSION);
-	}
+	snprintf(temp, sizeof(temp), "DavPSP %s", PPSSPP_GIT_VERSION);
 	credits[0] = (const char *)temp;
 
 	dc.Begin();

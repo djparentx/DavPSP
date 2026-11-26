@@ -438,7 +438,7 @@ bool System_MakeRequest(SystemRequestType type, int requestId, const std::string
 	case SystemRequestType::SET_WINDOW_TITLE:
 	{
 		std::lock_guard<std::mutex> guard(g_mutexWindow);
-		const char *app_name = System_GetPropertyBool(SYSPROP_APP_GOLD) ? "PPSSPP Gold" : "PPSSPP";
+		const char *app_name = "DavPSP";
 		g_windowState.title = param1.empty() ? app_name : param1;
 		g_windowState.update = true;
 		return true;
@@ -1371,7 +1371,7 @@ static int printUsage(const char *progname)
 
 	// NOTE: wording largely taken from
 	// https://www.ppsspp.org/docs/reference/command-line/
-	fprintf(dst, "PPSSPP - a PSP emulator (SDL build)\n");
+	fprintf(dst, "DavPSP - a PSP emulator based on PPSSPP (SDL build)\n");
 	fprintf(dst, "Usage: %s [options] [FILE]\n\n", progname);
 	fprintf(dst, "Launches FILE (e.g. ISO image) if present.\n");
 	fprintf(dst, "Options (some of these are specific to SDL backend):\n");

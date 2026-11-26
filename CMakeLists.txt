@@ -1502,7 +1502,7 @@ else()
 	if(GOLD)
 		set(TargetBin PPSSPPGold)
 	else()
-		set(TargetBin PPSSPPSDL)
+		set(TargetBin davpsp)
 	endif()
 	# Require SDL
 	add_compile_definitions(SDL)
